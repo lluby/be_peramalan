@@ -6,8 +6,9 @@ const {
   updateBahanBaku,
   deleteBahanBaku,
 } = require("../controllers/bahanBakuController");
-
+const verifyToken = require("../libs/verifyToken");
 const { validateBahanBaku } = require("../validation/bahanBakuValidation");
+const verifyAdmin = require("../libs/verifyAdmin");
 
 const router = express.Router();
 
@@ -20,10 +21,10 @@ const validateMiddleware = (req, res, next) => {
 };
 
 // Routes CRUD
-router.post("/bahan-baku", validateMiddleware, createBahanBaku);
+router.post("/bahan-baku", verifyToken, verifyAdmin, validateMiddleware, createBahanBaku);
 router.get("/bahan-baku", getAllBahanBaku);
 router.get("/bahan-baku/:id", getBahanBakuById);
-router.put("/bahan-baku/:id", validateMiddleware, updateBahanBaku);
-router.delete("/bahan-baku/:id", deleteBahanBaku);
+router.put("/bahan-baku/:id", verifyToken, verifyAdmin, validateMiddleware, updateBahanBaku);
+router.delete("/bahan-baku/:id", verifyToken, verifyAdmin, deleteBahanBaku);
 
 module.exports = router;

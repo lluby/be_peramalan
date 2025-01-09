@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
+const { register, login, authenticate } = require('../controllers/authController');
+const veryfyToken = require('../libs/verifyToken');
 
-// Endpoint untuk register
-router.post('/register', authController.register);
-
-// Endpoint untuk login
-router.post('/login', authController.login);
+router.post('/login', login);
+router.post('/register', register);
+router.get('/me', veryfyToken, authenticate);
 
 module.exports = router;

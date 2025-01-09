@@ -1,81 +1,148 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const prisma = new PrismaClient();
-const { registerValidation, loginValidation } = require('../validation/authValidation');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const prisma = require("../libs/prisma");
+const {
+  registerValidation,
+  loginValidation,
+} = require("../validation/authValidation");
 
-
-exports.register = async (req, res) => {
-  const { username, password, role } = req.body;
-
-  const { error } = registerValidation(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
-
-  const existingUser = await prisma.user.findUnique({ where: { username } });
-  if (existingUser) {
-    return res.status(400).json({ message: 'Username already exists' });
-  }
-
-  if (role !== 'admin' && role !== 'staff') {
-    return res.status(400).json({ message: 'Invalid role. Must be "admin" or "staff"' });
-  }
-
+const register = async (req, res) => {
   try {
+    const { value, error } = registerValidation.validate(req.body);
+
+    const { username, password, email, role } = value;
+
+    // Jika tidak lolos validasi maka akan error dan mengembalikan status 400
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Bad Request!",
+        err: error.message,
+        data: null,
+      });
+    }
+
+    // Cek apakah username sudah ada
+    const existingUser = await prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Username sudah terdaftar" });
+    }
+
+    // Cek apakah email sudah ada
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email sudah terdaftar" });
+    };
+
+    // Enkripsi password sebelum disimpan
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Simpan pengguna baru ke database
     const newUser = await prisma.user.create({
       data: {
         username,
         password: hashedPassword,
+        email,
         role,
       },
     });
 
-    res.status(201).json({
-      message: 'User registered successfully',
-      user: { id: newUser.id, username: newUser.username, role: newUser.role },
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(201).json({ message: "Pendaftaran berhasil", user: newUser });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ message: "Internal server error", err: error.messge });
   }
 };
 
-
-exports.login = async (req, res) => {
-  const { username, password } = req.body;
-
-  const { error } = loginValidation(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
-
+const login = async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
+    const { value, error } = loginValidation.validate(req.body);
+    const { username, password } = value;
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Bad Request!",
+        err: error.message,
+        data: null,
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        username: username,
+      },
+    });
+
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        message: "user not found",
+        data: null,
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({
+        success: false,
+        message: "Wrong id or Password",
+        data: null,
+      });
     }
 
-    const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' });
+    const payload = {
+      id: user.id,
+      username: user.username,
+    };
 
-    if (user.role === 'staff') {
-      await addUserHistory(user.id, 'Login ke sistem');
-    }
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET || "YOUR_SECRET_KEY",
+      {
+        expiresIn: "1d",
+      }
+    );
 
-    res.status(200).json({
-      message: 'Login successful',
-      user: { id: user.id, username: user.username, role: user.role },
-      token: token, 
+    // history login
+    await prisma.userHistory.create({
+      data: {
+        userId: user.id,
+        action: "LOGIN",
+      },
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+
+    return res.status(200).json({
+      success: true,
+      message: "Login success",
+      token: token,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal server error", err: error.messge });
   }
+};
+
+const authenticate = async (req, res) => {
+  return res.status(200).json({
+    status: true,
+    message: "OK",
+    err: null,
+    data: { user: req.user },
+  });
+};
+
+module.exports = {
+  register,
+  login,
+  authenticate,
 };

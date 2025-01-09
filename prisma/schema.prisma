@@ -17,9 +17,10 @@ model User {
   id       Int          @id @default(autoincrement())
   username String       @unique
   password String
+  email    String       @unique
   role     Role
+ 
   histories UserHistory[]
-
 }
 
 model BahanBaku {
@@ -49,14 +50,17 @@ enum Role{
 
 model UserHistory {
   id          Int       @id @default(autoincrement())
-  title       String    @default("Default Title")
-  description String    @default("No description available")
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  action      action
   createdAt   DateTime  @default(now())
+}
 
-  userId      Int?      // Mengubah menjadi nullable sementara
-  user        User?     @relation(fields: [userId], references: [id])
-
-  @@index([userId])
+enum action {
+  LOGIN
+  CREATE
+  UPDATE
+  DELETE
 }
 
 

@@ -1,8 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../libs/prisma");
 
 // Controller untuk menampilkan semua pengguna
-exports.getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany();
     res.status(200).json(users);
@@ -13,7 +12,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Controller untuk menambah pengguna
-exports.addUser = async (req, res) => {
+const addUser = async (req, res) => {
     const { username, password, role } = req.body;
   
     // Cek data yang diterima dari frontend
@@ -53,7 +52,7 @@ exports.addUser = async (req, res) => {
   };
   
 // Controller untuk menghapus pengguna
-exports.deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -75,4 +74,10 @@ exports.deleteUser = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
   }
+};
+
+module.exports = {
+  getAllUsers,
+  addUser,
+  deleteUser,
 };

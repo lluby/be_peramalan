@@ -1,9 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../libs/prisma");
 
 // CREATE: Menambahkan bahan baku baru
 const createBahanBaku = async (req, res) => {
   const { name, quantity, alpha, month } = req.body;
+  const user_id = req.user.id;
 
   try {
     const bahanBaku = await prisma.bahanBaku.create({
@@ -14,6 +14,16 @@ const createBahanBaku = async (req, res) => {
         month,
       },
     });
+
+    // Menambahkan riwayat aksi ke userHistory
+    await prisma.userHistory.create({
+      data: {
+        userId: user_id,
+        action: 'CREATE',
+      }
+    });
+
+
     return res.status(201).json(bahanBaku);
   } catch (error) {
     console.error("Error creating bahan baku:", error);
@@ -53,6 +63,7 @@ const getBahanBakuById = async (req, res) => {
 // UPDATE: Memperbarui bahan baku
 const updateBahanBaku = async (req, res) => {
     const { id } = req.params;
+    const user_id = req.user.id;
     const { name, quantity, alpha, month } = req.body;
   
     console.log("Data yang diterima:", req.body);
@@ -80,6 +91,14 @@ const updateBahanBaku = async (req, res) => {
         where: { id: parsedId },
         data: { name, quantity, alpha, month },
       });
+
+      // Menambahkan riwayat aksi ke userHistory
+    await prisma.userHistory.create({
+      data: {
+        userId: user_id,
+        action: 'UPDATE',
+      }
+    });
   
       return res.status(200).json(updatedBahanBaku);
     } catch (error) {
@@ -91,6 +110,7 @@ const updateBahanBaku = async (req, res) => {
 // DELETE: Menghapus bahan baku
 const deleteBahanBaku = async (req, res) => {
   const { id } = req.params;
+  const user_id = req.user.id;
 
   try {
     // Validasi ID sebagai angka
@@ -111,6 +131,14 @@ const deleteBahanBaku = async (req, res) => {
     // Hapus bahan baku
     await prisma.bahanBaku.delete({
       where: { id: parsedId },
+    });
+
+    // Menambahkan riwayat aksi ke userHistory
+    await prisma.userHistory.create({
+      data: {
+        userId: user_id,
+        action: 'DELETE',
+      }
     });
 
     // Kirimkan respons sukses
