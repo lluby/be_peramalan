@@ -65,6 +65,10 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' });
 
+    if (user.role === 'staff') {
+      await addUserHistory(user.id, 'Login ke sistem');
+    }
+
     res.status(200).json({
       message: 'Login successful',
       user: { id: user.id, username: user.username, role: user.role },

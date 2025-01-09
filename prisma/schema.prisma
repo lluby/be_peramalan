@@ -14,10 +14,12 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  password String 
+  id       Int          @id @default(autoincrement())
+  username String       @unique
+  password String
   role     Role
+  histories UserHistory[]
+
 }
 
 model BahanBaku {
@@ -44,3 +46,17 @@ enum Role{
   admin
   staff
 }
+
+model UserHistory {
+  id          Int       @id @default(autoincrement())
+  title       String    @default("Default Title")
+  description String    @default("No description available")
+  createdAt   DateTime  @default(now())
+
+  userId      Int?      // Mengubah menjadi nullable sementara
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+

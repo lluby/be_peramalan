@@ -90,28 +90,40 @@ const updateBahanBaku = async (req, res) => {
   
 // DELETE: Menghapus bahan baku
 const deleteBahanBaku = async (req, res) => {
-    const { id } = req.params;
-  
-    try {
-      const bahanBaku = await prisma.bahanBaku.findUnique({
-        where: { id: parseInt(id, 10) },
-      });
-  
-      if (!bahanBaku) {
-        return res.status(404).json({ error: "Bahan baku tidak ditemukan" });
-      }
+  const { id } = req.params;
 
-      await prisma.bahanBaku.delete({
-        where: { id: parseInt(id, 10) },
-      });
-  
-      return res.status(200).json({ message: "Bahan baku berhasil dihapus" });
-    } catch (error) {
-      console.error("Error deleting bahan baku:", error);  // Menambahkan logging error lebih lengkap
-      return res.status(500).json({ error: "Gagal menghapus data bahan baku", details: error.message });
+  try {
+    // Validasi ID sebagai angka
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      return res.status(400).json({ error: "ID tidak valid" });
     }
-  };
-  
+
+    // Periksa apakah bahan baku dengan ID tersebut ada
+    const bahanBaku = await prisma.bahanBaku.findUnique({
+      where: { id: parsedId },
+    });
+
+    if (!bahanBaku) {
+      return res.status(404).json({ error: "Bahan baku tidak ditemukan" });
+    }
+
+    // Hapus bahan baku
+    await prisma.bahanBaku.delete({
+      where: { id: parsedId },
+    });
+
+    // Kirimkan respons sukses
+    return res.status(200).json({ message: "Bahan baku berhasil dihapus" });
+  } catch (error) {
+    console.error("Error deleting bahan baku:", error); // Logging lebih informatif
+    return res
+      .status(500)
+      .json({ error: "Gagal menghapus data bahan baku", details: error.message });
+  }
+};
+
+
 module.exports = {
   createBahanBaku,
   getAllBahanBaku,
