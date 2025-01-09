@@ -10,7 +10,7 @@ const register = async (req, res) => {
   try {
     const { value, error } = registerValidation.validate(req.body);
 
-    const { username, password, email, role } = value;
+    const { username, password, role } = value;
 
     // Jika tidak lolos validasi maka akan error dan mengembalikan status 400
     if (error) {
@@ -31,15 +31,6 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Username sudah terdaftar" });
     }
 
-    // Cek apakah email sudah ada
-    const existingEmail = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingEmail) {
-      return res.status(400).json({ message: "Email sudah terdaftar" });
-    };
-
     // Enkripsi password sebelum disimpan
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -48,7 +39,6 @@ const register = async (req, res) => {
       data: {
         username,
         password: hashedPassword,
-        email,
         role,
       },
     });
@@ -57,7 +47,7 @@ const register = async (req, res) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ message: "Internal server error", err: error.messge });
+      .json({ message: "Internal server error", err: error });
   }
 };
 
