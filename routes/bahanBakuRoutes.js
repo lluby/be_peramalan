@@ -21,10 +21,10 @@ const validateMiddleware = (req, res, next) => {
 };
 
 // Routes CRUD
-router.post("/bahan-baku", verifyToken, verifyAdmin, validateMiddleware, createBahanBaku);
+router.post("/bahan-baku", verifyToken, validateMiddleware, createBahanBaku);
 router.get("/bahan-baku", getAllBahanBaku);
 router.get("/bahan-baku/:id", getBahanBakuById);
-router.put("/bahan-baku/:id", verifyToken, verifyAdmin, validateMiddleware, updateBahanBaku);
-router.delete("/bahan-baku/:id", verifyToken, verifyAdmin, deleteBahanBaku);
+router.put("/bahan-baku/:id", verifyToken, validateMiddleware, updateBahanBaku);
+router.delete("/bahan-baku/:id", verifyToken, deleteBahanBaku);
 
 module.exports = router;

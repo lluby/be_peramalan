@@ -53,72 +53,75 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    // Validasi input dari client
     const { value, error } = loginValidation.validate(req.body);
-    const { username, password } = value;
 
     if (error) {
-      return res.status(400).json({
-        success: false,
-        message: "Bad Request!",
-        err: error.message,
-        data: null,
+      return res.status(400).json({ 
+        success: false, 
+        message: "Validation error", 
+        error: error.message 
       });
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        username: username,
-      },
-    });
+    const { username, password } = value;
+
+    // Cari user berdasarkan username
+    const user = await prisma.user.findUnique({ where: { username } });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "user not found",
-        data: null,
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
       });
     }
 
+    // Bandingkan password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Wrong id or Password",
-        data: null,
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid username or password" 
       });
     }
 
+    // Buat payload untuk JWT
     const payload = {
       id: user.id,
       username: user.username,
+      role: user.role, // Tambahkan role ke payload
     };
 
+    // Generate JWT
     const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET || "YOUR_SECRET_KEY",
-      {
-        expiresIn: "1d",
-      }
+      payload, 
+      process.env.JWT_SECRET || "YOUR_SECRET_KEY", 
+      { expiresIn: "1d" } // Token berlaku selama 1 hari
     );
 
-    // history login
-    await prisma.userHistory.create({
-      data: {
-        userId: user.id,
-        action: "LOGIN",
-      },
+    // Simpan history login
+    await prisma.userHistory.create({ 
+      data: { 
+        userId: user.id, 
+        action: "LOGIN" 
+      } 
     });
 
+    // Kirim respons sukses
     return res.status(200).json({
       success: true,
-      message: "Login success",
-      token: token,
+      message: "Login berhasil",
+      token,
+      role: user.role, // Kirim role agar bisa digunakan oleh frontend
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Internal server error", err: error.messge });
+    // Tangani error tak terduga
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal server error", 
+      error: error.message 
+    });
   }
 };
 

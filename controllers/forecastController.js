@@ -3,7 +3,7 @@ const prisma = require("../libs/prisma");
 const singleExponentialSmoothing = (data, alpha) => {
   let smoothedData = [data[0]];
   for (let i = 1; i < data.length; i++) {
-    const smoothedValue = alpha * data[i] + (1 - alpha) * smoothedData[i - 1];
+    const smoothedValue = alpha * data[i - 1] + (1 - alpha) * smoothedData[i - 1];
     smoothedData.push(smoothedValue);
   }
   return smoothedData;
