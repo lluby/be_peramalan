@@ -7,6 +7,8 @@ const port = 3000;
 app.use(cors()); 
 app.use(express.json());
 
+app.use(express.static('public'));
+
 const morgan = require('morgan');
 app.use(morgan('dev'));
 
