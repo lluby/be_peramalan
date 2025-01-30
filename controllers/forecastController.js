@@ -28,7 +28,7 @@ const getForecast = async (req, res) => {
 
     // Ambil quantity dan bulan
     const quantities = bahanBakuData.map(item => item.quantity);
-    const alpha = 0.8;  // Gunakan alpha 0.8 sesuai dengan yang diinginkan
+    const alpha = 0.66;  
     const bulan = bahanBakuData.map(item => item.month);
 
     // Gunakan fungsi Single Exponential Smoothing
